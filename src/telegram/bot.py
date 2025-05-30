@@ -152,7 +152,6 @@ async def procces_link(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-#, "1982407933": {"full_name": "Albert Nosachenko", "chat_id": 1982407933, "username": "Albert_Nosachenko"}
 @dp.callback_query(F.data.startswith("webinar_confirm"))
 async def send_link(callback: types.CallbackQuery):
     user_id=str(callback.message.chat.id)
