@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramForbiddenError
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.storage.user_storage import storage
 from src.telegram.states import RegistrationStates
@@ -10,7 +11,7 @@ from configs.config import HELP_MESSAGE,START_MESSAGE,\
 FORGETME_MESSAGE,REGISTER_START_MESSAGE,REGISTER_TAKEN_MESSAGE,\
 REGISTER_COMPLETE_MESSAGE,ADMIN_PWD_MESSAGE,ADMIN_COMPLETE_MESSAGE,\
 FORGETME_TAKEN_MESSAGE, ADMIN_PWD,ADMIN_FORBIDDEN_MESSAGE, REMINDER_MESSAGE,\
-LINK_MESSAGE,LINK_SUCCES_SEND,LINK_TEMPLATE
+LINK_MESSAGE,LINK_SUCCES_SEND,LINK_TEMPLATE,LINK_CONFIRM_MESSAGE
 
 
 from pathlib import Path
@@ -20,7 +21,12 @@ dp = Dispatcher()
 
 user_path=Path("./data/users.json")
 users=storage(user_path)
+
+attended=Path("./data/attended.json")
+attended={}
+
 admin_id=None
+link=None
 
 @dp.message(Command('start'))
 async def start_command(message: types.Message):  
@@ -54,7 +60,7 @@ async def process_name(message: types.Message, state: FSMContext):
     users.add(user["chat_id"],user)
     
     #await bot.send_message(user["chat_id"],"hi")
-    await message.answer(REGISTER_COMPLETE_MESSAGE%{"full_name":message.text,"time":"10:00","day":"132021"})
+    await message.answer(REGISTER_COMPLETE_MESSAGE%{"full_name":message.text})
     await state.clear()
 
 
@@ -76,7 +82,7 @@ async def admin_command(message: types.Message, state: FSMContext):
     await state.set_state(RegistrationStates.admin_login)
 
 @dp.message(RegistrationStates.admin_login)
-async def process_name(message: types.Message, state: FSMContext):
+async def procces_pwd(message: types.Message, state: FSMContext):
     global admin_id
     if message.text!=ADMIN_PWD:
         await message.answer(ADMIN_FORBIDDEN_MESSAGE)
@@ -88,7 +94,7 @@ async def process_name(message: types.Message, state: FSMContext):
 
 # send reminder
 @dp.message(Command('send'))
-async def admin_command(message: types.Message):  
+async def send_command(message: types.Message):  
     if admin_id!=message.from_user.id:
         await message.answer(ADMIN_FORBIDDEN_MESSAGE)
         return
@@ -104,7 +110,7 @@ async def admin_command(message: types.Message):
 
 
 @dp.message(Command('users'))
-async def admin_command(message: types.Message):  
+async def procces_users(message: types.Message):  
     if admin_id!=message.from_user.id:
         await message.answer(ADMIN_FORBIDDEN_MESSAGE)
         return
@@ -118,7 +124,7 @@ async def admin_command(message: types.Message):
 
 #link
 @dp.message(Command('link'))
-async def admin_command(message: types.Message, state: FSMContext):  
+async def link_command(message: types.Message, state: FSMContext):  
     if admin_id!=message.from_user.id:
         await message.answer(ADMIN_FORBIDDEN_MESSAGE)
         return
@@ -126,12 +132,31 @@ async def admin_command(message: types.Message, state: FSMContext):
     await state.set_state(RegistrationStates.link_send)
 
 @dp.message(RegistrationStates.link_send)
-async def process_name(message: types.Message, state: FSMContext):
+async def procces_link(message: types.Message, state: FSMContext):
+    global link 
+    link=message.text
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="yes",
+            callback_data=f"webinar_confirm"
+        )]
+    ])
     for chat_id in users.user_data:
         try:
-            await bot.send_message(int(chat_id),LINK_TEMPLATE%message.text) 
+            await bot.send_message(int(chat_id),LINK_CONFIRM_MESSAGE,reply_markup=keyboard) 
         except TelegramForbiddenError as ex:
             print (ex)
             users.delete(chat_id)
     await message.answer(LINK_SUCCES_SEND)
     await state.clear()
+
+
+#, "1982407933": {"full_name": "Albert Nosachenko", "chat_id": 1982407933, "username": "Albert_Nosachenko"}
+@dp.callback_query(F.data.startswith("webinar_confirm"))
+async def send_link(callback: types.CallbackQuery):
+    user_id=str(callback.message.chat.id)
+    attended[user_id]=users.user_data[user_id]
+    await callback.message.answer(LINK_TEMPLATE%link)
+    await bot.send_message(int(admin_id),f'{attended[user_id]} joined')
+    print(attended)

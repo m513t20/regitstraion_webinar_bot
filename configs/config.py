@@ -19,7 +19,7 @@ HELP_MESSAGE="""I am a bot who will register you to Mike's webinar about qr code
 REGISTER_START_MESSAGE="""Please write your full name"""
 
 REGISTER_COMPLETE_MESSAGE="""You are registered on course.
-\nWe will start at %(time)s on %(day)s
+\nWe will start at June 7th on 19:20
 \nYour name is %(full_name)s
 """
 
@@ -52,4 +52,5 @@ REMINDER_MESSAGE="Hi, I'm reminding you that on June 7th at 19:20 there will be 
 
 LINK_MESSAGE="send your link"
 LINK_SUCCES_SEND="sent succesfully"
+LINK_CONFIRM_MESSAGE="Do you want to join a webinar"
 LINK_TEMPLATE="Your invite link is %s"
