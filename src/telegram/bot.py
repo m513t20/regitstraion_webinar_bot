@@ -63,6 +63,9 @@ async def process_name(message: types.Message, state: FSMContext):
     await message.answer(REGISTER_COMPLETE_MESSAGE%{"full_name":message.text})
     await state.clear()
 
+    if admin_id is not None:
+        bot.send_message(admin_id,f'{users.user_data}')
+
 
 @dp.message(Command('forgetme'))
 async def forgetme_command(message: types.Message):  
@@ -159,3 +162,21 @@ async def send_link(callback: types.CallbackQuery):
     await callback.message.answer(LINK_TEMPLATE%link)
     await bot.send_message(int(admin_id),f'{attended[user_id]} joined')
     print(attended)
+    await callback.message.delete()
+
+
+
+@dp.message(Command('diploma'))
+async def send_command(message: types.Message):  
+    if admin_id!=message.from_user.id:
+        await message.answer(ADMIN_FORBIDDEN_MESSAGE)
+        return
+    
+    for chat_id in attended:
+        try:
+            await bot.send_message(int(chat_id),"thx for visiting") 
+        except TelegramForbiddenError as ex:
+            print (ex)
+            users.delete(chat_id)
+    await message.answer("SENDED SUCCESFULLY")
+    
