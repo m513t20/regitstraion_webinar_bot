@@ -41,7 +41,7 @@ FORGETME_TAKEN_MESSAGE="""You are not registered. Please write /register"""
 
 
 ADMIN_PWD_MESSAGE="""Please enter admin password"""
-ADMIN_PWD="QR_is_cool"
+ADMIN_PWD=""
 ADMIN_FORBIDDEN_MESSAGE="""FORBIDEN"""
 ADMIN_COMPLETE_MESSAGE="""Welcome home snake"""
 
